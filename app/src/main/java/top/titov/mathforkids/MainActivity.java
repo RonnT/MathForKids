@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
 
     private static final int MAX_NUMBER = 5;
     private static final int ANSWER_COUNT = 3;
@@ -22,9 +22,12 @@ public class MainActivity extends AppCompatActivity {
     public List<String> itemList = new ArrayList<>();
     private GridView answerGridView;
     private ArrayAdapter<String> adapter;
-    private List<Integer> numberList = new ArrayList<>();
+    private ArrayList<Integer> numberList = new ArrayList<>();
+
     private Integer firstNum;
     private Integer secondNum;
+    private Integer result;
+
     private TextView firstNumTextView;
     private TextView secondNumTextView;
     private Handler handler;
@@ -33,52 +36,49 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         firstNumTextView = (TextView) findViewById(R.id.firstTextView);
         secondNumTextView = (TextView) findViewById(R.id.secondTextView);
         answerGridView = (GridView) findViewById(R.id.answerGrid);
+
         handler = new Handler(this.getMainLooper());
-        fillNumbers();
-        clearAndFillItemList();
+
+        generateEquation();
+        clearAndFillAnswerList();
+
         adapter = new ArrayAdapter<>(this, R.layout.answer_item, itemList);
         answerGridView.setAdapter(adapter);
         answerGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(final AdapterView<?> adapterView, View view, int i, long l) {
-                Integer result = Integer.parseInt(itemList.get(i));
-                if (result.equals(firstNum+secondNum)) {
-                    view.setBackgroundColor(ContextCompat.getColor(MainActivity.this, android.R.color.holo_green_light));
-                    handler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            fillNumbers();
-                            clearAndFillItemList();
-                            adapter.notifyDataSetChanged();
-                        }
-                    }, 3000);
-                } else view.setBackgroundColor(ContextCompat.getColor(MainActivity.this, android.R.color.holo_red_light));
-
+                (MainActivity.this).onItemClick(view, i);
             }
         });
     }
 
-    private void fillNumbers() {
+    private void generateEquation() {
         Random random = new Random(System.currentTimeMillis());
         firstNum = random.nextInt(MAX_NUMBER);
         secondNum = random.nextInt(MAX_NUMBER);
         firstNumTextView.setText(String.valueOf(firstNum));
         secondNumTextView.setText(String.valueOf(secondNum));
-
+        result = firstNum + secondNum;
     }
 
-    private void clearAndFillItemList() {
+    private void clearAndFillAnswerList() {
         itemList.clear();
+        boolean hasAnswer = false;
         fillAnswerArray();
-        Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < ANSWER_COUNT; i++) {
-            itemList.add(String.valueOf(getNextAnswer(random)));
+            Integer answer = getNextAnswer();
+            if (answer.equals(result)) hasAnswer = true;
+            itemList.add(String.valueOf(getNextAnswer()));
         }
-        String answer = String.valueOf(firstNum + secondNum);
-        itemList.set(random.nextInt(ANSWER_COUNT), answer);
+        if (!hasAnswer){
+            Random random = new Random(System.currentTimeMillis());
+            itemList.set(random.nextInt(ANSWER_COUNT), String.valueOf(result));
+        }
+
     }
 
     private void fillAnswerArray() {
@@ -87,10 +87,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Integer getNextAnswer(Random random) {
+    private Integer getNextAnswer() {
+        Random random = new Random(System.currentTimeMillis());
         int position = random.nextInt(numberList.size());
         Integer answer = numberList.get(position);
         numberList.remove(position);
+        numberList.trimToSize();
         return answer;
+    }
+
+    public void onItemClick(View view, int position) {
+        Integer answer = Integer.parseInt(itemList.get(position));
+        if (answer.equals(result)) {
+            view.setBackgroundColor(ContextCompat.getColor(MainActivity.this, android.R.color.holo_green_light));
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    generateEquation();
+                    clearAndFillAnswerList();
+                    adapter = new ArrayAdapter<>(MainActivity.this, R.layout.answer_item, itemList);
+                    answerGridView.setAdapter(adapter);
+                }
+            }, 1000);
+        } else
+            view.setBackgroundColor(ContextCompat.getColor(MainActivity.this, android.R.color.holo_red_light));
     }
 }
