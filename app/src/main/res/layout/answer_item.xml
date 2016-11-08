@@ -7,9 +7,7 @@
     android:layout_weight="5"
     tools:text="2"
     android:textSize="96dp"
-    android:paddingLeft="25dp"
-    android:paddingRight="25dp"
-    android:layout_margin="16dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
     android:gravity="center"
-    android:layout_gravity="center"
     android:background="@drawable/border_background" />
