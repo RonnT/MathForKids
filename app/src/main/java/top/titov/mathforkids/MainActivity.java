@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
@@ -17,7 +18,7 @@ import java.util.Random;
 public class MainActivity extends AppCompatActivity {
 
     private static final int MAX_NUMBER = 5;
-    private static final int ANSWER_COUNT = 4;
+    private static final int ANSWER_COUNT = 2;
 
     public List<String> variantList = new ArrayList<>();
     private GridView answerGridView;
@@ -32,6 +33,24 @@ public class MainActivity extends AppCompatActivity {
     private TextView secondNumTextView;
     private Handler handler;
 
+    private ViewGroup resultLayout;
+    private TextView totalText;
+    private TextView rightText;
+    private TextView wrongText;
+
+    private int total;
+    private int right;
+    private int wrong;
+
+    private boolean isChallenge = true;
+
+    private AdapterView.OnItemClickListener onGridClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            (MainActivity.this).onItemClick(view, i);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,6 +60,11 @@ public class MainActivity extends AppCompatActivity {
         secondNumTextView = (TextView) findViewById(R.id.secondTextView);
         answerGridView = (GridView) findViewById(R.id.answerGrid);
 
+        resultLayout = findViewById(R.id.resultLayout);
+        totalText = findViewById(R.id.totalText);
+        rightText = findViewById(R.id.rightText);
+        wrongText = findViewById(R.id.wrongText);
+
         handler = new Handler(this.getMainLooper());
 
         generateEquation();
@@ -48,12 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
         adapter = new ArrayAdapter<>(this, R.layout.answer_item, variantList);
         answerGridView.setAdapter(adapter);
-        answerGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(final AdapterView<?> adapterView, View view, int i, long l) {
-                (MainActivity.this).onItemClick(view, i);
-            }
-        });
+        answerGridView.setNumColumns(ANSWER_COUNT);
     }
 
     private void generateEquation() {
@@ -66,6 +85,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void clearAndFillAnswerList() {
+        totalText.setText(getString(R.string.total, total));
+        rightText.setText(getString(R.string.right, right));
+        wrongText.setText(getString(R.string.wrong, wrong));
+        answerGridView.setOnItemClickListener(onGridClickListener);
         variantList.clear();
         boolean hasAnswer = false;
         fillNumberLine();
@@ -78,7 +101,6 @@ public class MainActivity extends AppCompatActivity {
             Random random = new Random(System.currentTimeMillis());
             variantList.set(random.nextInt(ANSWER_COUNT), String.valueOf(result));
         }
-
     }
 
     private void fillNumberLine() {
@@ -100,17 +122,40 @@ public class MainActivity extends AppCompatActivity {
     public void onItemClick(View view, int position) {
         Integer answer = Integer.parseInt(variantList.get(position));
         if (answer.equals(result)) {
-            view.setBackgroundColor(ContextCompat.getColor(MainActivity.this, android.R.color.holo_green_light));
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    generateEquation();
-                    clearAndFillAnswerList();
-                    adapter = new ArrayAdapter<>(MainActivity.this, R.layout.answer_item, variantList);
-                    answerGridView.setAdapter(adapter);
-                }
-            }, 1000);
-        } else
-            view.setBackgroundColor(ContextCompat.getColor(MainActivity.this, android.R.color.holo_red_light));
+            onRightAnswer(view);
+        } else onWrongAnswer(view);
+
+    }
+
+    private void onRightAnswer(View clickedView){
+        clickedView.setBackgroundColor(ContextCompat.getColor(MainActivity.this, android.R.color.holo_green_light));
+        total++;
+        right++;
+        if (isChallenge) answerGridView.setOnItemClickListener(null);
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                generateEquation();
+                clearAndFillAnswerList();
+                adapter = new ArrayAdapter<>(MainActivity.this, R.layout.answer_item, variantList);
+                answerGridView.setAdapter(adapter);
+            }
+        }, 500);
+    }
+
+    private void onWrongAnswer(View clickedView){
+        clickedView.setBackgroundColor(ContextCompat.getColor(MainActivity.this, android.R.color.holo_red_light));
+        total++;
+        wrong++;
+        if (isChallenge) answerGridView.setOnItemClickListener(null);
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                generateEquation();
+                clearAndFillAnswerList();
+                adapter = new ArrayAdapter<>(MainActivity.this, R.layout.answer_item, variantList);
+                answerGridView.setAdapter(adapter);
+            }
+        }, 500);
     }
 }

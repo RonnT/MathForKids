@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">MathForKids</string>
+
+    <string name="total">Всего: %1$d</string>
+    <string name="right">Баллы победителя: %1$d</string>
+    <string name="wrong">Проигранный бой: %1$d</string>
 </resources>
